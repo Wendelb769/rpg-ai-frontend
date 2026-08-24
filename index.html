@@ -15,8 +15,47 @@
     <div id="responseMaster"></div>
 
     <script>
-        function sendAction(){
-            console.log("FUNCIONANDO PERFEITAMENTE!")
+        async function sendAction(){
+            const inputAction = document.getElementById("actionPlayer");
+            const divResponse = document.getElementById("responseMaster");
+
+            const action = inputAction.value.trim();
+
+            if(!action){
+                alert("Digite algo antes de enviar!");
+                return;
+            }
+
+            divResponse.innerText = "O Mestre está pensando...";
+
+            try{
+                const actionDTO = {
+                    id: 1,
+                    actionPlayer: action
+                }
+
+                const response = await fetch(`http://localhost:8080/characters/play`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(actionDTO)
+                });
+
+                if(!response.ok){
+                    throw new Error("Erro no backend: " + response.status);
+                }
+
+                const narrative = await response.text();
+
+                divResponse.innerText = narrative;
+
+                inputAction.value = '';
+            } catch (erro){
+                console.error("Erro na comunicação: ", erro);
+                divResponse.innerText = "Erro ao se comunicar com o Mestre";
+            }
+
         }
     </script>
 </body>
