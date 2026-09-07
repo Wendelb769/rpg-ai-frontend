@@ -4,20 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RPG Mestre IA</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Mestre de RPG</h1>
+    <div class="container">
+        <aside class="card-personagem">
+            <h2>Ficha de Herói</h2>
 
-    <input type="text", id="actionPlayer", placeholder="O que você faz?">
+            <div class="status-item">
+                <label for="charId">ID do Personagem:</label>
+                <input type="number" id="charId" value="1">
+            </div>
 
-    <button onclick="sendAction()">Enviar</button>
+            <hr class="divisor">
 
-    <div id="responseMaster"></div>
+            <div class="status-item">
+                <span>Status de Conexão:</span>
+                <strong id="statusText" class="status-online">Pronto</strong>
+            </div>
+        </aside>
+
+        <main class="painel-jogo">
+            <div class="terminal" id="terminal">
+                <div class="mensagem mensagem-ia">
+                    > O Mestre aguarda suas ordens. Digite sua ação abaixo para iniciar
+                </div>
+            </div>
+
+            <div class="controles">
+                <input type="text" id="campoAcao" placeholder="Investigo o báu antigo no canto da sala..." onkeydown="checarEnter(event)">
+                <button id="btnEnviar" onclick="sendAction()">Enviar Ação</button>
+            </div>
+        </main>
+    </div>
 
     <script>
         async function sendAction(){
-            const inputAction = document.getElementById("actionPlayer");
-            const divResponse = document.getElementById("responseMaster");
+            const inputAction = document.getElementById("campoAcao");
+            const terminal = document.getElementById("terminal");
+            const statusText = document.getElementById("statusText");
+            const btnSend = document.getElementById("btnEnviar");
+            const characterId = document.getElementById("charId").value;
 
             const action = inputAction.value.trim();
 
@@ -26,11 +53,18 @@
                 return;
             }
 
-            divResponse.innerText = "O Mestre está pensando...";
+            terminal.innerHTML += `<div class="mensagem mensagem-jogdor">> ${action}</div>`;
+            inputAction.value = " ";
+
+            terminal.scrollTop = terminal.scrollHeight;
+
+            statusText.innerText = "Mestre pensando...";
+            statusText.className = "status-pensando";
+            btnSend.disabled = true;
 
             try{
                 const actionDTO = {
-                    id: 1,
+                    id: parseInt(characterId),
                     actionPlayer: action
                 }
 
@@ -48,14 +82,22 @@
 
                 const narrative = await response.text();
 
-                divResponse.innerText = narrative;
-
-                inputAction.value = '';
+                terminal.innerHTML += `<div class="mensagem mensagem-ia">${narrative}</div>`;
             } catch (erro){
                 console.error("Erro na comunicação: ", erro);
-                divResponse.innerText = "Erro ao se comunicar com o Mestre";
+                terminal.innerHTML += `<div class="mensagem mensagem-erro">[ERRO]: Não foi possível conectar ao Mestre. Verifique o Spring Boot. </div>`;
+            } finally {
+                statusText.innerText = "Pronto";
+                statusText.className = "status-online";
+                btnSend.disabled = false;
+                terminal.scrollTop = terminal.scrollHeight
             }
+        }
 
+        function checarEnter(event){
+            if (event.key === 'Enter') {
+                sendAction();
+            }
         }
     </script>
 </body>
